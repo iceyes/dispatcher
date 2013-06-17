@@ -198,8 +198,8 @@ struct dispatcher_service_user_kern {
 	u16			protocol;
 	union nf_inet_addr	addr;		/* virtual ip address */
 	u16			port;
+	u16			num_process;
 
-	u32			netmask;	/* persistent netmask */
 };
 
 
@@ -223,7 +223,7 @@ struct dispatcher_service {
 	__u16			protocol; /* which protocol (TCP/UDP) */
 	union nf_inet_addr	addr;	  /* IP address for virtual service */
 	__be16			port;	  /* port number for the service */
-	__be32			netmask;  /* grouping granularity */
+	__u16			num_process;
 
 	struct list_head	destinations;  /* real server d-linked list */
 	__u32			num_dests;     /* number of servers */

@@ -741,13 +741,6 @@ dispatcher_add_service(struct dispatcher_service_user_kern *u,
 	/* increase the module use count */
 	dispatcher_use_count_inc();
 
-#ifdef CONFIG_DISPATCHER_IPV6
-	if (u->af == AF_INET6 && (u->netmask < 1 || u->netmask > 128)) {
-		ret = -EINVAL;
-		goto out_err;
-	}
-#endif
-
 	svc = kzalloc(sizeof(struct dispatcher_service), GFP_ATOMIC);
 	if (svc == NULL) {
 		DISPATCHER_DBG(1, "%s(): no memory\n", __func__);
@@ -763,7 +756,7 @@ dispatcher_add_service(struct dispatcher_service_user_kern *u,
 	svc->protocol = u->protocol;
 	dispatcher_addr_copy(svc->af, &svc->addr, &u->addr);
 	svc->port = u->port;
-	svc->netmask = u->netmask;
+	svc->num_process = u->num_process;
 
 	INIT_LIST_HEAD(&svc->destinations);
 
@@ -1068,7 +1061,7 @@ static void dispatcher_copy_usvc_compat(struct dispatcher_service_user_kern *usv
 	usvc->protocol		= usvc_compat->protocol;
 	usvc->addr.ip		= usvc_compat->addr;
 	usvc->port		= usvc_compat->port;
-	usvc->netmask		= usvc_compat->netmask;
+	usvc->num_process		= usvc_compat->num_process;
 }
 
 static void dispatcher_copy_udest_compat(struct dispatcher_dest_user_kern *udest,
@@ -1182,7 +1175,6 @@ dispatcher_copy_service(struct dispatcher_service_entry *dst, struct dispatcher_
 	dst->protocol = src->protocol;
 	dst->addr = src->addr.ip;
 	dst->port = src->port;
-	dst->netmask = src->netmask;
 	dst->num_dests = src->num_dests;
 }
 
@@ -1412,7 +1404,6 @@ static const struct nla_policy dispatcher_svc_policy[DISPATCHER_SVC_ATTR_MAX + 1
 	[DISPATCHER_SVC_ATTR_ADDR]		= { .type = NLA_BINARY,
 					    .len = sizeof(union nf_inet_addr) },
 	[DISPATCHER_SVC_ATTR_PORT]		= { .type = NLA_U16 },
-	[DISPATCHER_SVC_ATTR_NETMASK]		= { .type = NLA_U32 },
 };
 
 /* Policy used for attributes in nested attribute DISPATCHER_CMD_ATTR_DEST */
@@ -1437,9 +1428,6 @@ static int dispatcher_genl_fill_service(struct sk_buff *skb,
 	NLA_PUT_U16(skb, DISPATCHER_SVC_ATTR_PROTOCOL, svc->protocol);
 	NLA_PUT(skb, DISPATCHER_SVC_ATTR_ADDR, sizeof(svc->addr), &svc->addr);
 	NLA_PUT_U16(skb, DISPATCHER_SVC_ATTR_PORT, svc->port);
-
-	NLA_PUT_U32(skb, DISPATCHER_SVC_ATTR_NETMASK, svc->netmask);
-
 
 	nla_nest_end(skb, nl_service);
 */
@@ -1529,18 +1517,11 @@ static int dispatcher_genl_parse_service(struct dispatcher_service_user_kern *us
 
 	/* If a full entry was requested, check for the additional fields */
 	if (full_entry) {
-		struct nlattr *nla_netmask;
 		struct dispatcher_service *svc;
-
-		nla_netmask = attrs[DISPATCHER_SVC_ATTR_NETMASK];
-
-		if (!(nla_netmask))
-			return -EINVAL;
 
 		/* prefill flags from service if it already exists */
 		svc = __dispatcher_service_get(usvc->af, usvc->protocol,
 						  &usvc->addr, usvc->port);
-		usvc->netmask = nla_get_u32(nla_netmask);
 	}
 
 	return 0;

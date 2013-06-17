@@ -52,8 +52,7 @@ struct dispatcher_service_user {
 	__u16		protocol;
 	__be32			addr;		/* virtual ip address */
 	__be16			port;
-
-	__be32			netmask;	/* persistent netmask */
+	__u16			num_process;
 };
 
 
@@ -79,8 +78,7 @@ struct dispatcher_service_entry {
 	__u16		protocol;
 	__be32			addr;		/* virtual address */
 	__be16			port;
-
-	__be32			netmask;	/* persistent netmask */
+	__u16			num_process;
 
 	/* number of real servers */
 	unsigned int		num_dests;
@@ -167,8 +165,6 @@ enum {
 	DISPATCHER_SVC_ATTR_PROTOCOL,		/* virtual service protocol */
 	DISPATCHER_SVC_ATTR_ADDR,		/* virtual service address */
 	DISPATCHER_SVC_ATTR_PORT,		/* virtual service port */
-
-	DISPATCHER_SVC_ATTR_NETMASK,		/* persistent netmask */
 	__DISPATCHER_SVC_ATTR_MAX,
 };
 

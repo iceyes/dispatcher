@@ -114,6 +114,8 @@ tcp_snat_handler(struct sk_buff *skb,
 }
 
 
+#define GET_REAL_PORT(port, svc) ((port) * 100 + smp_processor_id() % ((svc)->num_process))
+
 static int
 tcp_dnat_handler(struct sk_buff *skb,
 		 struct dispatcher_protocol *pp, struct dispatcher_service *svc)
@@ -124,7 +126,7 @@ tcp_dnat_handler(struct sk_buff *skb,
 	struct dispatcher_dest *dest = svc->dest;
 	__be16 localport;
 	
-	localport = htons(htons(dest->port) * 100 + smp_processor_id());
+	localport = htons(GET_REAL_PORT(htons(dest->port), svc));
 
 #ifdef CONFIG_DISPATCHER_IPV6
 	if (dest->af == AF_INET6)
